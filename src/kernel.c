@@ -4,6 +4,7 @@
  */
 
 #include "gdt.h"
+#include "idt.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -102,14 +103,14 @@ static void terminal_putchar(char c) {
   }
 }
 
-static void terminal_writestring(const char *data) {
+void terminal_writestring(const char *data) {
   size_t len = strlen(data);
   for (size_t i = 0; i < len; i++)
     terminal_putchar(data[i]);
 }
 
-static void terminal_writestring_color(const char *data, enum vga_color fg,
-                                       enum vga_color bg) {
+void terminal_writestring_color(const char *data, enum vga_color fg,
+                                enum vga_color bg) {
   uint8_t prev_color = terminal_color;
   terminal_setcolor(vga_entry_color(fg, bg));
   terminal_writestring(data);
@@ -122,6 +123,7 @@ void kernel_main(uint32_t multiboot_magic, uint32_t multiboot_info) {
 
   terminal_initialize();
   gdt_init();
+  idt_init();
 
   terminal_writestring_color("=========================================="
                              "======================================\n",
@@ -155,4 +157,9 @@ void kernel_main(uint32_t multiboot_magic, uint32_t multiboot_info) {
 
   terminal_writestring_color("  Ze-OS kernel loaded and running.\n",
                              VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
+
+  terminal_writestring("\nTriggering a test Divide-by-Zero exception...\n");
+
+  /* Trigger divide by zero to test the IDT exception handler */
+  __asm__ __volatile__("div %0" ::"r"(0));
 }
