@@ -1,0 +1,14 @@
+# Build artifacts
+build/
+iso/boot/
+ze-os.iso
+
+# Editor / IDE
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS files
+Thumbs.db
+.DS_Store
