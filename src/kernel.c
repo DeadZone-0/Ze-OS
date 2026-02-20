@@ -7,10 +7,10 @@
 #include "idt.h"
 #include "keyboard.h"
 #include "pic.h"
+#include "shell.h"
 #include "timer.h"
 #include <stddef.h>
 #include <stdint.h>
-
 
 #define VGA_ADDRESS 0xB8000
 #define VGA_WIDTH 80
@@ -68,6 +68,8 @@ static void terminal_initialize(void) {
     }
   }
 }
+
+void terminal_clear(void) { terminal_initialize(); }
 
 static void terminal_setcolor(uint8_t color) { terminal_color = color; }
 
@@ -189,7 +191,9 @@ void kernel_main(uint32_t multiboot_magic, uint32_t multiboot_info) {
   __asm__ __volatile__("sti");
   terminal_writestring_color("DONE\n", VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
 
-  terminal_writestring("\nIdling gracefully...\n");
+  /* Start the shell */
+  shell_init();
+
   /* Let the OS idle. The timer interrupt will fire in the background. */
   for (;;) {
     __asm__ __volatile__("hlt");

@@ -3,6 +3,7 @@
 #include "keyboard.h"
 #include "idt.h"
 #include "io.h"
+#include "shell.h"
 
 extern void terminal_writestring(const char *data);
 extern void terminal_putchar(char c);
@@ -59,7 +60,7 @@ static void keyboard_callback(struct registers *regs) {
     /* A key has been pressed down */
     char c = kbdus[scancode];
     if (c != 0) {
-      terminal_putchar(c);
+      shell_handle_keypress(c);
     }
   }
 }
