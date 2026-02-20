@@ -5,10 +5,12 @@
 
 #include "gdt.h"
 #include "idt.h"
+#include "keyboard.h"
 #include "pic.h"
 #include "timer.h"
 #include <stddef.h>
 #include <stdint.h>
+
 
 #define VGA_ADDRESS 0xB8000
 #define VGA_WIDTH 80
@@ -84,8 +86,17 @@ static void terminal_scroll(void) {
   }
 }
 
-static void terminal_putchar(char c) {
-  if (c == '\n') {
+void terminal_putchar(char c) {
+  if (c == '\b') {
+    if (terminal_col > 0) {
+      terminal_col--;
+    } else if (terminal_row > 0) {
+      terminal_row--;
+      terminal_col = VGA_WIDTH - 1;
+    }
+    const size_t index = terminal_row * VGA_WIDTH + terminal_col;
+    terminal_buffer[index] = vga_entry(' ', terminal_color);
+  } else if (c == '\n') {
     terminal_col = 0;
     terminal_row++;
   } else {
@@ -169,6 +180,10 @@ void kernel_main(uint32_t multiboot_magic, uint32_t multiboot_info) {
   /* Initialize PIT timer to 100 Hz */
   timer_init(100);
   terminal_writestring("  [+] PIT initialized (100 Hz).\n");
+
+  /* Initialize PS/2 Keyboard on IRQ 1 */
+  keyboard_init();
+  terminal_writestring("  [+] PS/2 Keyboard Driver loaded.\n");
 
   terminal_writestring("\nEnabling Hardware Interrupts (STI)... ");
   __asm__ __volatile__("sti");
