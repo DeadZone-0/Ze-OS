@@ -3,9 +3,9 @@
  * VGA text mode driver and kernel entry point.
  */
 
+#include "gdt.h"
 #include <stddef.h>
 #include <stdint.h>
-
 
 #define VGA_ADDRESS 0xB8000
 #define VGA_WIDTH 80
@@ -121,6 +121,7 @@ void kernel_main(uint32_t multiboot_magic, uint32_t multiboot_info) {
   (void)multiboot_info;
 
   terminal_initialize();
+  gdt_init();
 
   terminal_writestring_color("=========================================="
                              "======================================\n",

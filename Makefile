@@ -12,12 +12,13 @@ SRC_DIR   := src
 BUILD_DIR := build
 ISO_DIR   := iso
 
-ASM_SRC   := $(SRC_DIR)/boot.s
-C_SRC     := $(SRC_DIR)/kernel.c
+ASM_SRCS  := $(wildcard $(SRC_DIR)/*.s)
+C_SRCS    := $(wildcard $(SRC_DIR)/*.c)
 
-ASM_OBJ   := $(BUILD_DIR)/boot.o
-C_OBJ     := $(BUILD_DIR)/kernel.o
+ASM_OBJS  := $(patsubst $(SRC_DIR)/%.s, $(BUILD_DIR)/%.o, $(ASM_SRCS))
+C_OBJS    := $(patsubst $(SRC_DIR)/%.c, $(BUILD_DIR)/%.o, $(C_SRCS))
 
+OBJS      := $(ASM_OBJS) $(C_OBJS)
 KERNEL    := $(BUILD_DIR)/ze-os.bin
 ISO       := ze-os.iso
 
@@ -27,13 +28,13 @@ GRUB_CFG  := $(ISO_DIR)/boot/grub/grub.cfg
 
 all: $(ISO)
 
-$(ASM_OBJ): $(ASM_SRC) | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.s | $(BUILD_DIR)
 	$(AS) $(ASFLAGS) $< -o $@
 
-$(C_OBJ): $(C_SRC) | $(BUILD_DIR)
+$(BUILD_DIR)/%.o: $(SRC_DIR)/%.c | $(BUILD_DIR)
 	$(CC) $(CFLAGS) -c $< -o $@
 
-$(KERNEL): $(ASM_OBJ) $(C_OBJ)
+$(KERNEL): $(OBJS)
 	$(LD) $(LDFLAGS) -o $@ $^
 
 verify: $(KERNEL)
