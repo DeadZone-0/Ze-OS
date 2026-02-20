@@ -1,6 +1,15 @@
 /* isr.c - High level interrupt service routines */
 
 #include "idt.h"
+#include "pic.h"
+#include <stddef.h>
+
+/* Array of interrupt handler functions */
+static isr_t interrupt_handlers[256];
+
+void register_interrupt_handler(uint8_t n, isr_t handler) {
+  interrupt_handlers[n] = handler;
+}
 
 /* Convert an integer to a string (base 10 or 16) - used for printing error
  * codes */
@@ -100,4 +109,17 @@ void isr_handler(struct registers *r) {
   __asm__ __volatile__("cli; hlt");
   for (;;)
     ;
+}
+
+/* This is called by the assembly IRQ stub in isr.s */
+void irq_handler(struct registers *r) {
+  /* Send an EOI (End of Interrupt) signal to the PICs.
+   * If this interrupt involved the slave, send EOI to both. */
+  pic_send_eoi(r->int_no - 32);
+
+  /* Dispatch to the registered C handler, if any */
+  if (interrupt_handlers[r->int_no] != 0) {
+    isr_t handler = interrupt_handlers[r->int_no];
+    handler(r);
+  }
 }

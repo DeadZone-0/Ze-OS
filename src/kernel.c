@@ -5,6 +5,8 @@
 
 #include "gdt.h"
 #include "idt.h"
+#include "pic.h"
+#include "timer.h"
 #include <stddef.h>
 #include <stdint.h>
 
@@ -158,8 +160,23 @@ void kernel_main(uint32_t multiboot_magic, uint32_t multiboot_info) {
   terminal_writestring_color("  Ze-OS kernel loaded and running.\n",
                              VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
 
-  terminal_writestring("\nTriggering a test Divide-by-Zero exception...\n");
+  terminal_writestring("\nInitializing Hardware Devices...\n");
 
-  /* Trigger divide by zero to test the IDT exception handler */
-  __asm__ __volatile__("div %0" ::"r"(0));
+  /* Remap PIC vectors to 0x20 and 0x28 */
+  pic_remap(0x20, 0x28);
+  terminal_writestring("  [+] PIC properly remapped.\n");
+
+  /* Initialize PIT timer to 100 Hz */
+  timer_init(100);
+  terminal_writestring("  [+] PIT initialized (100 Hz).\n");
+
+  terminal_writestring("\nEnabling Hardware Interrupts (STI)... ");
+  __asm__ __volatile__("sti");
+  terminal_writestring_color("DONE\n", VGA_COLOR_LIGHT_GREEN, VGA_COLOR_BLACK);
+
+  terminal_writestring("\nIdling gracefully...\n");
+  /* Let the OS idle. The timer interrupt will fire in the background. */
+  for (;;) {
+    __asm__ __volatile__("hlt");
+  }
 }

@@ -1,0 +1,11 @@
+/* pic.h - Programmable Interrupt Controller (8259 PIC) */
+
+#ifndef PIC_H
+#define PIC_H
+
+#include <stdint.h>
+
+void pic_remap(int offset1, int offset2);
+void pic_send_eoi(unsigned char irq);
+
+#endif
